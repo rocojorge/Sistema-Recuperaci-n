@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "sis-recuperacion"
+version = "0.1.0"
+description = "Practicas de recuperacion jejeje"
+authors = ["rocojorge <56399579+rocojorge@users.noreply.github.com>"]
+license = "None"
+readme = "README.md"
+packages = [{include = "sis"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+bs4 = "^0.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

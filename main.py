@@ -1,0 +1,48 @@
+import time, os, json
+from Practica1_1 import charge_config, extract, transform, load
+import Practica1_2 as p2
+
+
+
+config_file = "config.json"
+
+
+def main():
+    """Programa principal que procesa todos los archivos XML de la colección."""
+    input_dir = charge_config(config_file)
+
+    if not os.path.exists(input_dir):
+        print(f"Error: El directorio {input_dir} no existe.")
+        return
+    
+    files = [f for f in os.listdir(input_dir) if f.endswith(".xml")]
+    total_files = len(files)
+    
+    print(f"Procesando {total_files} archivos en {input_dir}...")
+
+    start_time = time.time()
+    total_tokens = 0
+
+    for file in files:
+        file_path = os.path.join(input_dir, file)
+        extracted_data = extract(file_path)
+        if not extracted_data:
+            continue  # Saltar archivos sin metadatos válidos
+
+        tokens = transform(extracted_data["text"])
+        tokens1 = p2.stopper(tokens)
+        load(file, tokens)
+        load(file, tokens1,"stopper")
+
+        total_tokens += len(tokens)
+    
+    elapsed_time = time.time() - start_time
+    avg_tokens = total_tokens / total_files if total_files > 0 else 0
+
+    print(f"Procesamiento completado en {elapsed_time:.2f} segundos.")
+    print(f"Archivos procesados: {total_files}")
+    print(f"Total de tokens: {total_tokens}")
+    print(f"Promedio de tokens por archivo: {avg_tokens:.2f}")
+
+if __name__ == "__main__":
+    main()

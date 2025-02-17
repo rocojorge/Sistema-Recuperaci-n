@@ -1,6 +1,3 @@
-import Practica1_1 as p1
-from collections import Counter
-import time, os, json
 import nltk
 nltk.download("stopwords")
 from nltk.corpus import stopwords

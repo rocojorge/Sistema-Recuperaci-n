@@ -1,6 +1,7 @@
 import time, os, json
 from Practica1_1 import charge_config, extract, transform, load
 import Practica1_2 as p2
+import Practica1_3 as p3
 
 
 
@@ -31,8 +32,11 @@ def main():
 
         tokens = transform(extracted_data["text"])
         tokens1 = p2.stopper(tokens)
+        tokens2 = p3.stem_words(tokens1)
         load(file, tokens)
         load(file, tokens1,"stopper")
+        load(file, tokens2,"stemmer")
+        
 
         total_tokens += len(tokens)
     

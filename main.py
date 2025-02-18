@@ -23,6 +23,8 @@ def main():
 
     start_time = time.time()
     total_tokens = 0
+    total_wo_stopwords = 0
+    total_wo_stopwords_and_stemmer = 0
 
     for file in files:
         file_path = os.path.join(input_dir, file)
@@ -39,14 +41,20 @@ def main():
         
 
         total_tokens += len(tokens)
+        total_wo_stopwords += len(tokens1)
+        total_wo_stopwords_and_stemmer += len(tokens2)
     
     elapsed_time = time.time() - start_time
     avg_tokens = total_tokens / total_files if total_files > 0 else 0
+    avg_tokens1 = total_wo_stopwords / total_files if total_files > 0 else 0
 
     print(f"Procesamiento completado en {elapsed_time:.2f} segundos.")
     print(f"Archivos procesados: {total_files}")
     print(f"Total de tokens: {total_tokens}")
+    print(f"Total sin stopwords: {total_wo_stopwords}")
+    print(f"Total sin stopwords y stemmer: {total_wo_stopwords_and_stemmer}")
     print(f"Promedio de tokens por archivo: {avg_tokens:.2f}")
+    print(f"Promedio de tokens sin stopwords por archivo: {avg_tokens1:.2f}")
 
 if __name__ == "__main__":
     main()

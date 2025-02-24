@@ -53,12 +53,13 @@ def main():
         
     term2id, id2term = p4.enumeracion(all_tokens)
     doc2id, id2doc = p4.enum_docs(files)
-    load("term2id", term2id, "term2id")
-    load("id2term", id2term, "id2term")
+    load("term2id.json", term2id, "term2id")
+    load("id2term.json", id2term, "id2term")
     idwordIter = iter(id2term)
     for word in all_tokens:
         idword=next(idwordIter)
         indice_invertido = p4.indice_invertido(idword,word, doc2id, files)
+        idword = idword+".json"
         load(idword, indice_invertido, "indice_invertido")
         
     elapsed_time = time.time() - start_time

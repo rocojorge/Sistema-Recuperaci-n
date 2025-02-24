@@ -2,6 +2,7 @@ import time, os, json
 from Practica1_1 import charge_config, extract, transform, load
 import Practica1_2 as p2
 import Practica1_3 as p3
+import Practica1_4 as p4
 
 
 
@@ -25,7 +26,10 @@ def main():
     total_tokens = 0
     total_wo_stopwords = 0
     total_wo_stopwords_and_stemmer = 0
+    all_tokens = set()
 
+
+     #Aquí creamos los diccionarios de documentos
     for file in files:
         file_path = os.path.join(input_dir, file)
         extracted_data = extract(file_path)
@@ -35,15 +39,28 @@ def main():
         tokens = transform(extracted_data["text"])
         tokens1 = p2.stopper(tokens)
         tokens2 = p3.stem_words(tokens1)
+        all_tokens.update(tokens2)
+        #doc2id, id2doc = p4.enum_docs(files) esta llamada va fuera del bucle
         load(file, tokens)
         load(file, tokens1,"stopper")
         load(file, tokens2,"stemmer")
+        #load(file, doc2id,"doc2id")
+        #load(file, id2doc,"id2doc")
         
-
         total_tokens += len(tokens)
         total_wo_stopwords += len(tokens1)
         total_wo_stopwords_and_stemmer += len(tokens2)
-    
+        
+    term2id, id2term = p4.enumeracion(all_tokens)
+    doc2id, id2doc = p4.enum_docs(files)
+    load("term2id", term2id, "term2id")
+    load("id2term", id2term, "id2term")
+    idwordIter = iter(id2term)
+    for word in all_tokens:
+        idword=next(idwordIter)
+        indice_invertido = p4.indice_invertido(idword,word, doc2id, files)
+        load(idword, indice_invertido, "indice_invertido")
+        
     elapsed_time = time.time() - start_time
     avg_tokens = total_tokens / total_files if total_files > 0 else 0
     avg_tokens1 = total_wo_stopwords / total_files if total_files > 0 else 0

@@ -27,6 +27,7 @@ def main():
     total_wo_stopwords = 0
     total_wo_stopwords_and_stemmer = 0
     all_tokens = set()
+    stem_tokens=[]
 
 
      #Aquí creamos los diccionarios de documentos
@@ -39,6 +40,7 @@ def main():
         tokens = transform(extracted_data["text"])
         tokens1 = p2.stopper(tokens)
         tokens2 = p3.stem_words(tokens1)
+        stem_tokens.append(tokens2)
         all_tokens.update(tokens2)
         #doc2id, id2doc = p4.enum_docs(files) esta llamada va fuera del bucle
         load(file, tokens)
@@ -50,17 +52,37 @@ def main():
         total_tokens += len(tokens)
         total_wo_stopwords += len(tokens1)
         total_wo_stopwords_and_stemmer += len(tokens2)
-        
+     
+     
+    print("Carpeta stemmer, stopper y tokens creada")
+    input_dir = charge_config(config_file,"stemed_files")
+    files=[]
+    files = [f for f in os.listdir(input_dir) if f.endswith(".json")] 
+    
     term2id, id2term = p4.enumeracion(all_tokens)
     doc2id, id2doc = p4.enum_docs(files)
     load("term2id.json", term2id, "term2id")
     load("id2term.json", id2term, "id2term")
+    load("doc2id.json", doc2id, "doc2id")
+    load("id2doc.json", id2doc, "id2doc")
+    print("Archivos term2id, id2term, doc2id e id2doc creados")
     idwordIter = iter(id2term)
+    indice_full={}
+    
+    print("Creando indice invertido")
+    
     for word in all_tokens:
+        indice_invertido=[]
         idword=next(idwordIter)
-        indice_invertido = p4.indice_invertido(idword,word, doc2id, files)
-        idword = idword+".json"
-        load(idword, indice_invertido, "indice_invertido")
+        iter_Stemm_tokens=iter(stem_tokens)
+        for file in files:
+            tokens=next(iter_Stemm_tokens)
+            indice_invertido += p4.indice_invertido(idword,word, doc2id, file, tokens)
+        indice_full.update({idword:indice_invertido})
+        
+    load("Indice Invertido", indice_full, "indice_invertido")
+      
+      
         
     elapsed_time = time.time() - start_time
     avg_tokens = total_tokens / total_files if total_files > 0 else 0

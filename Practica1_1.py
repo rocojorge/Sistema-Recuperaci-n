@@ -9,13 +9,13 @@ from bs4 import BeautifulSoup
 # Archivo de configuración
 config_file = "config.json"
 
-def charge_config(config_file):
+def charge_config(config_file,path_to_charge="env_files"):
     """Carga la configuración desde el archivo JSON, asegurando codificación UTF-8."""
     with open(config_file, "r", encoding="utf-8") as file:
         config = json.load(file)
     
     # Extraer y normalizar la ruta de los archivos XML
-    path_scielo = config.get("env_files", [{}])[0].get("path_scielo", "")
+    path_scielo = config.get(path_to_charge, [{}])[0].get("path_scielo", "")
     path_scielo = os.path.normpath(path_scielo)  # Normalizar ruta para evitar problemas
     path_scielo = path_scielo.encode('utf-8').decode('utf-8')  # Asegurar correcta codificación
 

@@ -18,24 +18,17 @@ def enum_docs(files): #files:lista de documentos
         #Los diccionarios de documentos son del 177d hacia delante hasta el 1177d que sería el último	
     return dict1,dict2
 
-def indice_invertido(id2term,word,doc2id,files): #words:dict{id,term}, files:dict{id,doc}
-    dictInvertido = {} #term2doc {idterm:(iddoc1,iddoc2,...)}
+def indice_invertido(id2term,word,doc2id,file,tok_file):
     idsFilesIn = []
-    veces = 0
-    for file in files:
-        if word in file:
-            for word1 in file:
-                if word == word1:
-                    veces += 1
-            idsFilesIn.append({doc2id[file]:veces})
-            veces=0
-    dictInvertido= idsFilesIn
-    
-    return dictInvertido
 
-def main():
-    pass
-if __name__ == "__main__":
-    main()
+    if word in tok_file:
+        for word1 in tok_file:
+            veces = 0
+            if word == word1:
+                veces += 1
+            if veces > 0:
+                idsFilesIn.append({doc2id[file]:veces})
+    return idsFilesIn
+
         
     

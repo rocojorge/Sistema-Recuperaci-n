@@ -4,10 +4,7 @@ import Practica1_2 as p2
 import Practica1_3 as p3
 import Practica1_4 as p4
 
-
-
 config_file = "config.json"
-
 
 def main():
     """Programa principal que procesa todos los archivos XML de la colección."""
@@ -42,18 +39,15 @@ def main():
         tokens2 = p3.stem_words(tokens1)
         stem_tokens.append(tokens2)
         all_tokens.update(tokens2)
-        #doc2id, id2doc = p4.enum_docs(files) esta llamada va fuera del bucle
+
         load(file, tokens)
         load(file, tokens1,"stopper")
         load(file, tokens2,"stemmer")
-        #load(file, doc2id,"doc2id")
-        #load(file, id2doc,"id2doc")
         
         total_tokens += len(tokens)
         total_wo_stopwords += len(tokens1)
         total_wo_stopwords_and_stemmer += len(tokens2)
-     
-     
+      
     print("Carpeta stemmer, stopper y tokens creada")
     input_dir = charge_config(config_file,"stemed_files")
     files=[]

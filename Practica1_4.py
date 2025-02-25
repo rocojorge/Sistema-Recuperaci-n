@@ -20,14 +20,13 @@ def enum_docs(files): #files:lista de documentos
 
 def indice_invertido(id2term,word,doc2id,file,tok_file):
     idsFilesIn = []
-
+    veces =0
     if word in tok_file:
         for word1 in tok_file:
-            veces = 0
             if word == word1:
                 veces += 1
-            if veces > 0:
-                idsFilesIn.append({doc2id[file]:veces})
+        if veces > 0:
+           idsFilesIn.append({doc2id[file]:veces})
     return idsFilesIn
 
         

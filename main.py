@@ -66,11 +66,11 @@ def main():
     load("doc2id.json", doc2id, "doc2id")
     load("id2doc.json", id2doc, "id2doc")
     print("Archivos term2id, id2term, doc2id e id2doc creados")
+    
     idwordIter = iter(id2term)
     indice_full={}
-    
     print("Creando indice invertido")
-    
+    second_start = time.time()
     for word in all_tokens:
         indice_invertido=[]
         idword=next(idwordIter)
@@ -80,8 +80,9 @@ def main():
             indice_invertido += p4.indice_invertido(idword,word, doc2id, file, tokens)
         indice_full.update({idword:indice_invertido})
         
-    load("Indice Invertido", indice_full, "indice_invertido")
-      
+    load("Indice_Invertido.json", indice_full, "indice_invertido")
+    elapsed_time1 = time.time() - second_start
+    print(f"Indice invertido creado en {elapsed_time1:.2f} segundos.")
       
         
     elapsed_time = time.time() - start_time

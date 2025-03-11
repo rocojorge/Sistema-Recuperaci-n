@@ -3,20 +3,19 @@ from Practica1_1 import charge_config, extract, transform, load
 import Practica1_2 as p2
 import Practica1_3 as p3
 import Practica1_4 as p4
+import Practica1_5 as p5
 
 config_file = "config.json"
 
 def main():
     """Programa principal que procesa todos los archivos XML de la colección."""
     input_dir = charge_config(config_file)
-
     if not os.path.exists(input_dir):
         print(f"Error: El directorio {input_dir} no existe.")
         return
     
     files = [f for f in os.listdir(input_dir) if f.endswith(".xml")]
     total_files = len(files)
-    
     print(f"Procesando {total_files} archivos en {input_dir}...")
 
     start_time = time.time()
@@ -26,14 +25,12 @@ def main():
     all_tokens = set()
     stem_tokens=[]
 
-
      #Aquí creamos los diccionarios de documentos
     for file in files:
         file_path = os.path.join(input_dir, file)
         extracted_data = extract(file_path)
         if not extracted_data:
             continue  # Saltar archivos sin metadatos válidos
-
         tokens = transform(extracted_data["text"])
         tokens1 = p2.stopper(tokens)
         tokens2 = p3.stem_words(tokens1)
@@ -49,6 +46,8 @@ def main():
         total_wo_stopwords_and_stemmer += len(tokens2)
       
     print("Carpeta stemmer, stopper y tokens creada")
+    
+    # Procesar archivos JSON generados y crear diccionarios de términos y documentos
     input_dir = charge_config(config_file,"stemed_files")
     files=[]
     files = [f for f in os.listdir(input_dir) if f.endswith(".json")] 
@@ -77,8 +76,16 @@ def main():
     load("Indice_Invertido.json", indice_full, "indice_invertido")
     elapsed_time1 = time.time() - second_start
     print(f"Indice invertido creado en {elapsed_time1:.2f} segundos.")
+    
+    #Para el indice de frecuencias tengo que hacer un recorrido de los tokens y contar cuantas veces aparece cada uno en cada documento
+    print("Calculando pesos normalizados...")    
+    norm_index, term_idf = p5.calcular_pesos(indice_full, doc2id)
+    # Guardar los resultados en disco
+    load("Indice_Invertido_Pesos.json", norm_index, "indice_invertido_pesos")
+    load("IDF.json", term_idf, "IDF")
+    
+    print("Cálculo de pesos normalizados completado.")
       
-        
     elapsed_time = time.time() - start_time
     avg_tokens = total_tokens / total_files if total_files > 0 else 0
     avg_tokens1 = total_wo_stopwords / total_files if total_files > 0 else 0

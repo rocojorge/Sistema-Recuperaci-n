@@ -4,6 +4,7 @@ import Practica1_2 as p2
 import Practica1_3 as p3
 import Practica1_4 as p4
 import Practica1_5 as p5
+import Practica1_6 as p6
 
 config_file = "config.json"
 
@@ -101,6 +102,17 @@ def main():
     print(f"Total sin stopwords y stemmer: {total_wo_stopwords_and_stemmer}")
     print(f"Promedio de tokens por archivo: {avg_tokens:.2f}")
     print(f"Promedio de tokens sin stopwords por archivo: {avg_tokens1:.2f}")
-
+    
+    # --- Integración de la búsqueda (Práctica 1_6) ---
+    query_file = "queries.txt"   # Fichero con consultas (una por línea)
+    if os.path.exists(query_file):
+        max_docs = 10   # Número máximo de documentos relevantes a devolver
+        print("Procesando consultas desde", query_file)
+        # Se pasan las estructuras ya cargadas: document_matrix, term_idf, term2id y id2doc.
+        p6.procesar_consultas_desde_fichero(query_file, max_docs, document_matrix, term_idf, term2id, id2doc)
+    else:
+        print("No se encontró el fichero de consultas (queries.txt).")
+        
+    
 if __name__ == "__main__":
     main()

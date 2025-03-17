@@ -8,7 +8,8 @@ import Practica1_5 as p5
 config_file = "config.json"
 
 def main():
-    """Programa principal que procesa todos los archivos XML de la colección."""
+    """Programa principal que procesa los archivos XML, crea diccionarios, índice invertido y calcula los pesos."""
+    # Cargar la ruta de entrada
     input_dir = charge_config(config_file)
     if not os.path.exists(input_dir):
         print(f"Error: El directorio {input_dir} no existe.")
@@ -23,9 +24,9 @@ def main():
     total_wo_stopwords = 0
     total_wo_stopwords_and_stemmer = 0
     all_tokens = set()
-    stem_tokens=[]
+    stem_tokens = []
 
-     #Aquí creamos los diccionarios de documentos
+    # Procesamiento de cada archivo: extracción, transformación, stopper y stemming.
     for file in files:
         file_path = os.path.join(input_dir, file)
         extracted_data = extract(file_path)
@@ -36,53 +37,56 @@ def main():
         tokens2 = p3.stem_words(tokens1)
         stem_tokens.append(tokens2)
         all_tokens.update(tokens2)
-
+        
         load(file, tokens)
-        load(file, tokens1,"stopper")
-        load(file, tokens2,"stemmer")
+        load(file, tokens1, "stopper")
+        load(file, tokens2, "stemmer")
         
         total_tokens += len(tokens)
         total_wo_stopwords += len(tokens1)
         total_wo_stopwords_and_stemmer += len(tokens2)
       
-    print("Carpeta stemmer, stopper y tokens creada")
+    print("Carpeta stemmer, stopper y tokens creada.")
     
-    # Procesar archivos JSON generados y crear diccionarios de términos y documentos
-    input_dir = charge_config(config_file,"stemed_files")
-    files=[]
-    files = [f for f in os.listdir(input_dir) if f.endswith(".json")] 
+    # Procesar archivos JSON generados en la carpeta de archivos ya stemmed
+    input_dir = charge_config(config_file, "stemed_files")
+    files = [f for f in os.listdir(input_dir) if f.endswith(".json")]
     
+    # Creación de diccionarios de términos y documentos
     term2id, id2term = p4.enumeracion(all_tokens)
     doc2id, id2doc = p4.enum_docs(files)
     load("term2id.json", term2id, "term2id")
     load("id2term.json", id2term, "id2term")
     load("doc2id.json", doc2id, "doc2id")
     load("id2doc.json", id2doc, "id2doc")
-    print("Archivos term2id, id2term, doc2id e id2doc creados")
+    print("Archivos term2id, id2term, doc2id e id2doc creados.")
     
+    # Creación del índice invertido
     idwordIter = iter(id2term)
-    indice_full={}
-    print("Creando indice invertido")
+    indice_full = {}
+    print("Creando índice invertido...")
     second_start = time.time()
     for word in all_tokens:
-        indice_invertido=[]
-        idword=next(idwordIter)
-        iter_Stemm_tokens=iter(stem_tokens)
+        indice_invertido = []
+        idword = next(idwordIter)
+        iter_Stemm_tokens = iter(stem_tokens)
         for file in files:
-            tokens=next(iter_Stemm_tokens)
-            indice_invertido += p4.indice_invertido(idword,word, doc2id, file, tokens)
-        indice_full.update({idword:indice_invertido})
+            tokens = next(iter_Stemm_tokens)
+            indice_invertido += p4.indice_invertido(idword, word, doc2id, file, tokens)
+        indice_full.update({idword: indice_invertido})
         
     load("Indice_Invertido.json", indice_full, "indice_invertido")
     elapsed_time1 = time.time() - second_start
-    print(f"Indice invertido creado en {elapsed_time1:.2f} segundos.")
+    print(f"Índice invertido creado en {elapsed_time1:.2f} segundos.")
     
-    #Para el indice de frecuencias tengo que hacer un recorrido de los tokens y contar cuantas veces aparece cada uno en cada documento
-    print("Calculando pesos normalizados...")    
-    norm_index, term_idf = p5.calcular_pesos(indice_full, doc2id)
-    # Guardar los resultados en disco
+    # Cálculo de pesos normalizados, IDF y generación de la matriz de documentos.
+    print("Calculando pesos normalizados y generando matriz de documentos...")
+    norm_index, term_idf, document_matrix = p5.calcular_todo(indice_full, doc2id, term2id)
+    
+    # Guardar resultados usando la función load
     load("Indice_Invertido_Pesos.json", norm_index, "indice_invertido_pesos")
     load("IDF.json", term_idf, "IDF")
+    load("Matriz_Documentos.json", document_matrix, "matriz_documentos")
     
     print("Cálculo de pesos normalizados completado.")
       

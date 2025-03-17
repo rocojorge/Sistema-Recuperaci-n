@@ -1,0 +1,4 @@
+// File: .gitignore
+// Description: Ignora archivos y carpetas que no se deben subir al repositorio
+
+matriz_documentos/Matriz_Documentos.json

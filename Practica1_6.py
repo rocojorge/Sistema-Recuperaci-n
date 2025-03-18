@@ -7,13 +7,9 @@ def procesar_consulta(text):
     """
     Preprocesa la consulta aplicando normalización, stopper y stemming.
     """
-    print("Texto original de la consulta:", text)
     tokens = transform(text)
-    print("Tokens tras transform:", tokens)
     tokens_sin_stop = p2.stopper(tokens)
-    print("Tokens tras stopper:", tokens_sin_stop)
     tokens_stem = p3.stem_words(tokens_sin_stop)
-    print("Tokens tras stemming:", tokens_stem)
     return tokens_stem
 
 def calcular_tf_consulta(tokens):
@@ -27,7 +23,6 @@ def calcular_tf_consulta(tokens):
         max_freq = max(tf.values())
         for token in tf:
             tf[token] = tf[token] / max_freq
-    print("TF normalizado de la consulta:", tf)
     return tf
 
 def vectorizar_consulta(peso_consulta, term2id, mapping_tokens):
@@ -39,9 +34,7 @@ def vectorizar_consulta(peso_consulta, term2id, mapping_tokens):
     vector = {}
     for token, tid in term2id.items():
         # Ahora se busca en peso_consulta utilizando el ID interno (tid)
-        vector[tid] = peso_consulta.get(tid, 0)
-    #print("Vector completo de la consulta:", vector)
-    
+        vector[tid] = peso_consulta.get(tid, 0)    
     for id in vector:
         if id in mapping_tokens:
             vector[id] = 1
@@ -75,24 +68,18 @@ def buscar_consulta(query_text, max_docs, document_matrix, idf, term2id, id2doc)
     Retorna:
       - resultados_con_nombre: Lista de tuplas (nombre_documento, similitud) ordenadas de mayor a menor.
       - tiempo: Tiempo empleado en calcular la similitud.
-    """
-    print("\n=== Procesando consulta ===")
-    # Preprocesar la consulta (transform, stopper, stemming)
+    """    # Preprocesar la consulta (transform, stopper, stemming)
     tokens_query = procesar_consulta(query_text)
     tf_query = calcular_tf_consulta(tokens_query)
     
     # Traducir cada token al ID interno y calcular su peso (tf * idf)
     # Se genera un diccionario peso_consulta con claves igual al ID interno
     peso_consulta = {}
-    mapping_tokens = []
-    #print("Pesos de la consulta (tf * idf) (usando IDs):", peso_consulta)
-    
+    mapping_tokens = []    
     for name in tokens_query:
         for id in term2id:
           if name == id:
-              mapping_tokens.append(term2id[id])
-    print("Mapping de tokens de la consulta a IDs:", mapping_tokens)
-    
+              mapping_tokens.append(term2id[id])    
     # Vectorizar la consulta: generar un vector completo en el mismo espacio que los documentos
     vector_consulta = vectorizar_consulta(peso_consulta, term2id, mapping_tokens)
     
@@ -101,12 +88,9 @@ def buscar_consulta(query_text, max_docs, document_matrix, idf, term2id, id2doc)
     inicio = time.time()
     for doc, doc_vector in document_matrix.items():
         sim = dot_product(vector_consulta, doc_vector)
-        #print(f"Similitud para doc {doc}: {sim}")
         if sim > 0:
             sim_scores[doc] = sim
-    tiempo = time.time() - inicio
-    print("\nSimilitudes finales (sin ordenar):", sim_scores)
-    
+    tiempo = time.time() - inicio    
     # Ordenar y limitar los resultados
     resultados = [(doc, score) for doc, score in sim_scores.items()]
     resultados.sort(key=lambda x: x[1], reverse=True)
@@ -114,8 +98,6 @@ def buscar_consulta(query_text, max_docs, document_matrix, idf, term2id, id2doc)
     
     # Mapear los doc IDs a nombres de documento
     resultados_con_nombre = [(id2doc.get(doc, doc), score) for doc, score in resultados]
-    print("Resultados finales (con nombre):", resultados_con_nombre)
-    print("Tiempo empleado en calcular la similitud:", tiempo)
     return resultados_con_nombre, tiempo
 
 def procesar_consultas_desde_fichero(query_filename, max_docs, document_matrix, idf, term2id, id2doc):
@@ -140,11 +122,8 @@ def procesar_consultas_desde_fichero(query_filename, max_docs, document_matrix, 
         print(f"Error al abrir {query_filename}: {e}")
         return
 
-    consultas = [c.strip() for c in consultas if c.strip()]
-    print("\nConsultas encontradas en el fichero:", consultas)
-    
+    consultas = [c.strip() for c in consultas if c.strip()]    
     for i, consulta in enumerate(consultas, start=1):
-        print(f"\n=== Consulta {i}: {consulta} ===")
         resultados, tiempo = buscar_consulta(consulta, max_docs, document_matrix, idf, term2id, id2doc)
         output_filename = f"resultado_consulta_{i}.txt"
         with open(output_filename, "w", encoding="utf-8") as fout:
@@ -154,8 +133,6 @@ def procesar_consultas_desde_fichero(query_filename, max_docs, document_matrix, 
                 dentro_toretun[doc] = score
         to_return[i] = dentro_toretun
         dentro_toretun = {}
-                
-        print(f"Resultados guardados en {output_filename}")
-        
+                        
     return to_return, consultas
         

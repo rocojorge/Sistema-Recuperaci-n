@@ -1,4 +1,4 @@
-Tiempo en calcular similitud: 1.5551 segundos
+Tiempo en calcular similitud: 1.4554 segundos
 S0212-97282013000100023.json: 0.3674
 S0212-97282014000100033.json: 0.2441
 S1139-76322011000200005.json: 0.2379

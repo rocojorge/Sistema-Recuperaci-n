@@ -40,7 +40,7 @@ def vectorizar_consulta(peso_consulta, term2id, mapping_tokens):
     for token, tid in term2id.items():
         # Ahora se busca en peso_consulta utilizando el ID interno (tid)
         vector[tid] = peso_consulta.get(tid, 0)
-    print("Vector completo de la consulta:", vector)
+    #print("Vector completo de la consulta:", vector)
     
     for id in vector:
         if id in mapping_tokens:
@@ -130,6 +130,9 @@ def procesar_consultas_desde_fichero(query_filename, max_docs, document_matrix, 
       - max_docs: Número máximo de documentos a devolver por consulta.
       - document_matrix, idf, term2id, id2doc: Estructuras ya cargadas en memoria.
     """
+    
+    to_return = {}
+    dentro_toretun = {}
     try:
         with open(query_filename, "r", encoding="utf-8") as f:
             consultas = f.readlines()
@@ -148,4 +151,11 @@ def procesar_consultas_desde_fichero(query_filename, max_docs, document_matrix, 
             fout.write(f"Tiempo en calcular similitud: {tiempo:.4f} segundos\n")
             for doc, score in resultados:
                 fout.write(f"{doc}: {score:.4f}\n")
+                dentro_toretun[doc] = score
+        to_return[i] = dentro_toretun
+        dentro_toretun = {}
+                
         print(f"Resultados guardados en {output_filename}")
+        
+    return to_return, consultas
+        

@@ -1,4 +1,4 @@
-Tiempo en calcular similitud: 1.4631 segundos
+Tiempo en calcular similitud: 3.6466 segundos
 S1699-695X2011000100005.json: 0.6922
 S0211-69952017000100009.json: 0.5713
 S1139-76322014000400014.json: 0.5165

@@ -7,56 +7,58 @@ import Practica1_5 as p5
 import Practica1_6 as p6
 import Practica1_7 as p7
 
+# Parámetros de configuración (podrían leerse de config.json)
+SCORING_METHOD = "tfidf"   # Opciones: "tfidf", "bm25", "lsi", "embedding"
+USE_EXPANSION = True       # Mejora 2: Expansión de consulta
+USE_PRF = True             # Mejora 1: Pseudo-realimentación
+USE_CATEGORY_FILTER = True # Mejora 3: Filtrado por categorías
+
 config_file = "config.json"
 
 def main():
-    """Programa principal que procesa los archivos XML, crea diccionarios, índice invertido y calcula los pesos."""
-    # Cargar la ruta de entrada
     input_dir = charge_config(config_file)
     if not os.path.exists(input_dir):
         print(f"Error: El directorio {input_dir} no existe.")
         return
-    
     files = [f for f in os.listdir(input_dir) if f.endswith(".xml")]
     total_files = len(files)
     print(f"Procesando {total_files} archivos en {input_dir}...")
-
     start_time = time.time()
     total_tokens = 0
     total_wo_stopwords = 0
     total_wo_stopwords_and_stemmer = 0
     all_tokens = set()
     stem_tokens = []
+    tokens_per_doc = {}  # Para BM25: almacenar la cantidad de tokens de cada documento
 
-    # Procesamiento de cada archivo: extracción, transformación, stopper y stemming.
+    # Procesamiento de cada archivo
     for file in files:
         file_path = os.path.join(input_dir, file)
         extracted_data = extract(file_path)
         if not extracted_data:
-            continue  # Saltar archivos sin metadatos válidos
+            continue
         tokens = transform(extracted_data["text"])
         tokens1 = p2.stopper(tokens)
         tokens2 = p3.stem_words(tokens1)
         stem_tokens.append(tokens2)
         all_tokens.update(tokens2)
-        
         load(file, tokens)
         load(file, tokens1, "stopper")
         load(file, tokens2, "stemmer")
-        
         total_tokens += len(tokens)
         total_wo_stopwords += len(tokens1)
         total_wo_stopwords_and_stemmer += len(tokens2)
+        tokens_per_doc[file.replace(".xml", ".json")] = len(tokens2)
       
     print("Carpeta stemmer, stopper y tokens creada.")
     
-    # Procesar archivos JSON generados en la carpeta de archivos ya stemmed
-    input_dir = charge_config(config_file, "stemed_files")
-    files = [f for f in os.listdir(input_dir) if f.endswith(".json")]
+    # Procesar archivos JSON de tokens stemmeados
+    input_dir_stem = charge_config(config_file, "stemed_files")
+    files_json = [f for f in os.listdir(input_dir_stem) if f.endswith(".json")]
     
     # Creación de diccionarios de términos y documentos
     term2id, id2term = p4.enumeracion(all_tokens)
-    doc2id, id2doc = p4.enum_docs(files)
+    doc2id, id2doc = p4.enum_docs(files_json)
     load("term2id.json", term2id, "term2id")
     load("id2term.json", id2term, "id2term")
     load("doc2id.json", doc2id, "doc2id")
@@ -72,7 +74,7 @@ def main():
         indice_invertido = []
         idword = next(idwordIter)
         iter_Stemm_tokens = iter(stem_tokens)
-        for file in files:
+        for file in files_json:
             tokens = next(iter_Stemm_tokens)
             indice_invertido += p4.indice_invertido(idword, word, doc2id, file, tokens)
         indice_full.update({idword: indice_invertido})
@@ -81,27 +83,55 @@ def main():
     elapsed_time1 = time.time() - second_start
     print(f"Índice invertido creado en {elapsed_time1:.2f} segundos.")
     
-    # Cálculo de pesos normalizados, IDF y generación de la matriz de documentos.
-    print("Calculando pesos normalizados y generando matriz de documentos...")
+    # Cálculo de pesos TF-IDF y generación de la matriz de documentos
+    print("Calculando pesos normalizados y generando matriz de documentos (TF-IDF)...")
     norm_index, term_idf, document_matrix = p5.calcular_todo(indice_full, doc2id, term2id)
-    
-    # Guardar resultados usando la función load
     load("Indice_Invertido_Pesos.json", norm_index, "indice_invertido_pesos")
     load("IDF.json", term_idf, "IDF")
     load("Matriz_Documentos.json", document_matrix, "matriz_documentos")
-        
+    
+    # Preparar estructuras para BM25 (si se usa ese método)
+    if SCORING_METHOD == "bm25":
+        bm25_params = p5.calcular_bm25_params(indice_full, doc2id, tokens_per_doc)
+    else:
+        bm25_params = None
+
+    # Preparar estructura para LSI (si se usa ese método)
+    if SCORING_METHOD == "lsi":
+        reduced_doc_matrix, U, S, Vt, term_ids = p5.lsi_transform(document_matrix, k=100)
+    else:
+        reduced_doc_matrix = Vt = None
+
+    # Preparar textos completos de documentos para embeddings (si se usa ese método)
+    if SCORING_METHOD == "embedding":
+        document_texts = {}
+        for file in files:
+            file_path = os.path.join(input_dir, file)
+            extracted = extract(file_path)
+            if extracted:
+                document_texts[file] = extracted["text"]
+    else:
+        document_texts = None
+
     query_file = "queries.txt"   # Fichero con consultas (una por línea)
     if os.path.exists(query_file):
-        max_docs = 10   # Número máximo de documentos relevantes a devolver
-        # Se pasan las estructuras ya cargadas: document_matrix, term_idf, term2id y id2doc.
-        query_results, queries= p6.procesar_consultas_desde_fichero(query_file, max_docs, document_matrix, term_idf, term2id, id2doc)
+        max_docs = 10
+        query_results, queries = p6.procesar_consultas_desde_fichero(
+            query_file, max_docs, document_matrix, term_idf, term2id, id2doc,
+            inverted_index=indice_full, tokens_per_doc=tokens_per_doc,
+            bm25_params=bm25_params, reduced_doc_matrix=reduced_doc_matrix, Vt=Vt,
+            document_texts=document_texts,
+            scoring_method=SCORING_METHOD, use_expansion=USE_EXPANSION, use_prf=USE_PRF
+        )
     else:
         print("No se encontró el fichero de consultas (queries.txt).")
-    #print (query_results) # Descomentar para ver los resultados de las consultas.
+    
+    # Filtrado por categorías si se activa
+    if USE_CATEGORY_FILTER:
+        query_results = p7.filtrar_por_categoria(query_results, config_file)
     
     p7.resultados_amplios(query_results, queries)
     p7.resultados_compactos(query_results)
-    
     
     elapsed_time = time.time() - start_time
     avg_tokens = total_tokens / total_files if total_files > 0 else 0
@@ -115,6 +145,5 @@ def main():
     print(f"Promedio de tokens por archivo: {avg_tokens:.2f}")
     print(f"Promedio de tokens sin stopwords por archivo: {avg_tokens1:.2f}")
         
-    
 if __name__ == "__main__":
     main()

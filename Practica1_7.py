@@ -1,32 +1,7 @@
-"""
-Practica1_7.py: Finalización del sistema básico de recuperación de información.
-Este módulo se encarga de formatear y mostrar los resultados finales de las consultas,
-tanto en un formato amplio (más detallado) como en un formato compacto (ideal para competición).
-
-Se asume que los resultados de las consultas se han obtenido previamente, es decir, que para cada
-consulta disponemos de una lista ordenada de resultados (tuplas de (doc_id, similitud)), y que
-además se dispone de un diccionario id2doc que mapea cada id de documento a su nombre/título.
-"""
-
 import Practica1_1 as p1
 import os
-import json
-
-
-
-
 
 def retrieve_name(file, config_file="config.json"):
-    """
-    Obtiene el nombre de un documento a partir de su id.
-    
-    Args:
-        file (str): Id del documento.
-        
-    Returns:
-        str: Nombre del documento.
-    """
-    
     input_dir = p1.charge_config(config_file)
     if not os.path.exists(input_dir):
         print(f"Error: El directorio {input_dir} no existe.")
@@ -34,37 +9,49 @@ def retrieve_name(file, config_file="config.json"):
     file_path = os.path.join(input_dir, file)
     extracted_data = p1.extract(file_path)
     return extracted_data["title"]
-    
-    
+
+def get_categories(file, config_file="config.json"):
+    """
+    Extrae las categorías (por ejemplo, keywords) del documento.
+    """
+    input_dir = p1.charge_config(config_file)
+    file_path = os.path.join(input_dir, file)
+    extracted_data = p1.extract(file_path)
+    return extracted_data.get("keywords", [])
+
+def filtrar_por_categoria(resultados, config_file="config.json"):
+    """
+    Permite al usuario filtrar los resultados por alguna categoría.
+    """
+    categoria = input("Introduce la categoría por la que deseas filtrar (o 'no' para omitir): ").strip().lower()
+    if categoria == "no":
+        return resultados
+    resultados_filtrados = {}
+    for query_id, docs in resultados.items():
+        filtrados = {}
+        for doc, score in docs.items():
+            # Convertir el nombre del documento JSON a nombre XML (se asume que se puede reconstruir)
+            xml_name = doc.replace(".json", ".xml")
+            cats = get_categories(xml_name, config_file)
+            # Si la categoría está entre los keywords (comparación en minúsculas)
+            if any(categoria in cat.lower() for cat in cats):
+                filtrados[doc] = score
+        resultados_filtrados[query_id] = filtrados
+    return resultados_filtrados
 
 def resultados_amplios(query_results, queries, config_file="config.json"):
-    """
-    Muestra los resultados de las consultas de forma amplia.
-    
-    Args:
-        query_results (dict): Diccionario con los resultados de las consultas.
-        queries (list): Lista de consultas.
-    """
     num = 1
     for query_id in queries:
-        print(f"{queries[num-1]}")
+        print(f"Consulta: {queries[num-1]}")
         for doc_name in query_results[num]:
-          print(f" Similitud obtenida: {doc_name} - {query_results[num][doc_name]}")
-          xml_name = doc_name.replace(".json", ".xml")
-          print(f" Nombre del documento: {retrieve_name(xml_name, config_file)}")
-          print()          
+            print(f" Similitud obtenida: {doc_name} - {query_results[num][doc_name]}")
+            xml_name = doc_name.replace(".json", ".xml")
+            print(f" Nombre del documento: {retrieve_name(xml_name, config_file)}")
+            print()
         num += 1
         print()
-        
+
 def resultados_compactos(query_results):
-    """
-    Muestra los resultados de las consultas de forma compacta.
-    
-    Args:
-        query_results (dict): Diccionario con los resultados de las consultas.
-        queries (list): Lista de consultas.
-    """
-    num=0
     for query in query_results:
-      for results in query_results[query]:
-        print(f"{query} {results}")
+        for doc, score in query_results[query].items():
+            print(f"{query} {doc} {score:.4f}")
